@@ -6,7 +6,7 @@ var app = express();
 var cors = require('cors');
 app.use(cors());
 
-const all = require('./controller');
+const all = require('./user');
 
 
 app.use(bodyParser.json());
@@ -24,39 +24,141 @@ let db = admin.firestore();
 app.get('/users', all)
 
 app.post('/users', async (req, res) => {
-    // console.log(req);
-    // return res.json({message: "req"});
-    let name = req.body.username;
-    console.log("name1 "+name);
-    admin.auth().createUser({
-        email: req.body.email,
-        password: req.body.password,
-        displayName: req.body.username,
+  let name = req.body.username;
+  admin.auth().createUser({
+    email: req.body.email,
+    password: req.body.password,
+    displayName: req.body.username,
+  })
+    .then((userRecord) => {
+      db.collection('users').add({
+        name: name,
+        userId: userRecord.uid,
+        fisioId: req.body.fisioId,
       })
-      .then((userRecord) => {
-        // See the UserRecord reference doc for the contents of userRecord.
-        // console.log(userRecord);
-        // console.log("name2 "+ name);
-        db.collection('users').add({
-            name: name,
-            userId: userRecord.uid,
-            fisioId: req.body.fisioId,
-          })
-          .then((docRef) => {
-            return res.json({ message: userRecord})
-          })
-          .catch((error) => {
-            // The document probably doesn't exist.
-            // console.error("Error updating document: ", error);
-            return res.json({ message: error});
+        .then((docRef) => {
+          return res.json({ message: userRecord })
+        })
+        .catch((error) => {
+          return res.json({ message: error });
         });
-        
-      })
-      .catch(function(error) {
-        // console.log('Error creating new user:', error);
-        return res.json({ message: error});
-        
-      });
+
+    })
+    .catch(function (error) {
+      // console.log('Error creating new user:', error);
+      return res.json({ message: error });
+
+    });
 })
 
-app.listen(process.env.PORT || 3000);
+app.get('/user', async (req, res) => {
+  let userId = req.query.user
+  await admin.auth().getUser(userId)
+    .then(userRecord => {
+      return res.json({
+        userId: userRecord.uid,
+        name: userRecord.displayName,
+        email: userRecord.email
+      })
+    })
+})
+app.get('/fisio', async (req, res) => {
+  db.collection('users')
+    .get()
+    .then(
+      async querySnapshot => {
+        const listUsers = await admin.auth().listUsers()
+        const usersAll = listUsers.users.map(user => {
+            return {
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName,
+                lastSignInTime: user.metadata.lastSignInTime,
+                creationTime: user.metadata.creationTime
+            }
+        })
+        // console.log(users);
+        let fisios = querySnapshot.docs.map(doc => ({ ...doc.data() }))
+        const fisiosID = [...new Set(fisios.filter(user => user.fisioId != null).map(user => user.fisioId))]
+        const retorno = usersAll.filter(fisio => fisiosID.indexOf(fisio.uid) !== -1)
+        return res.json(retorno)
+      })
+}
+)
+// app.get('/fisio', async (req, res) => {
+//   db.collection('users')
+//     .get()
+//     .then(
+//       querySnapshot => {
+//         const users = querySnapshot.docs.map(doc => ({ ...doc.data() }))
+//         let fisios = [ ...new Set(users.filter(user => user.fisioId != null).map(user => user.fisioId))]
+//         let resposta = await Promise.all(fisios.map(async fisio => {
+//           admin.auth().getUser(fisio).
+//           then(userRecord => {
+//             //console.log(userRecord)    
+//             return userRecord        
+//           })
+//         }
+//           )
+//         )
+//         (async () => {
+//           const resultado = await Promise.all(fisios.map(async fisio => {
+//           admin.auth().getUser(fisio).
+//           then(userRecord => {
+//             //console.log(userRecord)    
+//             return userRecord        
+//           })
+//         }
+//           ))
+//           console.log(resultado)
+//           return res.json(resultado)
+//         })
+
+
+//         // users.filter(user => user.fisioId !== null && user.fisioId !== "null").map(user => admin.auth()
+//         // .getUser(user.fisioId)
+//         // .then(userRecord => fisios.push(
+//         //   {fisioId: userRecord.uid,
+//         //     email: user.email,
+//         //     displayName: user.displayName}
+//         // ))
+//         // )
+//       //   users = users.filter(user => user.fisioId !== null && user.fisioId !== "null")
+//       // //   const fisio = Promise.all(users.
+//       // //   map(async user => {
+//       // //   //   const usuario = admin.auth()
+//       // //   //   .getUser(user.fisioId)
+//       // //   // console.log((await admin.auth()
+//       // //   // .getUser(user.fisioId)).uid)
+//       // //   // fisios.push(await admin.auth()
+//       // //   // .getUser(user.fisioId))
+//       // //   // console.log(fisios)
+//       // //   return await (admin.auth()
+//       // //   .getUser(user.fisioId))
+//       // // }))
+//       // users.forEach(user => {
+//       //   let resposta = admin.auth()
+//       //    .getUser(user.fisioId)
+//       //    .then(userRecord => {
+//       //     return userRecord
+//       //   }
+//       //   )
+//       //    fisios.push(resposta)
+//       // });
+//       // // const resposta = await fisio
+
+//       }
+//     )
+// })
+
+// const getUserById = async (uid) => {
+//   admin.auth()
+//     .getUser(uid)
+//     .then(userRecord => {
+//       return userRecord
+//     }
+//     )
+
+// }
+
+app.listen(process.env.PORT || 8080);

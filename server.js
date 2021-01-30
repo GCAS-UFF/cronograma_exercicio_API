@@ -62,6 +62,25 @@ app.get('/user', async (req, res) => {
       })
     })
 })
+app.get('/exercises', async (req, res) => {
+  (async () => {
+    let userId = req.query.id
+      try {
+          let query = db.collection('exercises').where("fisioId", "==", userId);
+          let response = [];
+          await query.get().then(querySnapshot => {
+          let docs = querySnapshot.docs;
+          for (let doc of docs) {
+              response.push(doc.data());
+          }
+          });
+          return res.status(200).send(response);
+      } catch (error) {
+          console.log(error);
+          return res.status(500).send(error);
+      }
+      })();
+  });
 app.get('/fisio', async (req, res) => {
   db.collection('users')
     .get()
@@ -69,13 +88,13 @@ app.get('/fisio', async (req, res) => {
       async querySnapshot => {
         const listUsers = await admin.auth().listUsers()
         const usersAll = listUsers.users.map(user => {
-            return {
-                uid: user.uid,
-                email: user.email,
-                displayName: user.displayName,
-                lastSignInTime: user.metadata.lastSignInTime,
-                creationTime: user.metadata.creationTime
-            }
+          return {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName,
+            lastSignInTime: user.metadata.lastSignInTime,
+            creationTime: user.metadata.creationTime
+          }
         })
         // console.log(users);
         let fisios = querySnapshot.docs.map(doc => ({ ...doc.data() }))

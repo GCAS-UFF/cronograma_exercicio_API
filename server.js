@@ -76,11 +76,30 @@ app.get('/exercises', async (req, res) => {
           });
           return res.status(200).send(response);
       } catch (error) {
-          console.log(error);
+          //console.log(error);
           return res.status(500).send(error);
       }
       })();
   });
+  app.get('/activities', async (req, res) => {
+    (async () => {
+      let id = req.query.id
+        try {
+            let query = db.collection('activities').where("exerciseId", "==", id);
+            let response = [];
+            await query.get().then(querySnapshot => {
+            let docs = querySnapshot.docs;
+            for (let doc of docs) {
+                response.push(doc.data());
+            }
+            });
+            return res.status(200).send(response);
+        } catch (error) {
+            //console.log(error);
+            return res.status(500).send(error);
+        }
+        })();
+    });
 app.get('/fisio', async (req, res) => {
   db.collection('users')
     .get()

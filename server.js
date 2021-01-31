@@ -85,7 +85,7 @@ app.get('/exercises', async (req, res) => {
     (async () => {
       let id = req.query.id
         try {
-            let query = db.collection('activities').where("exerciseId", "==", id);
+            let query = db.collection('activities').where("exerciseId", "==", id).orderBy("prescribedTo", "asc");
             let response = [];
             await query.get().then(querySnapshot => {
             let docs = querySnapshot.docs;
@@ -119,7 +119,7 @@ app.get('/fisio', async (req, res) => {
         let fisios = querySnapshot.docs.map(doc => ({ ...doc.data() }))
         const fisiosID = [...new Set(fisios.filter(user => user.fisioId != null).map(user => user.fisioId))]
         const retorno = usersAll.filter(fisio => fisiosID.indexOf(fisio.uid) !== -1)
-        return res.json(retorno)
+        return res.json(retorno)  
       })
 }
 )

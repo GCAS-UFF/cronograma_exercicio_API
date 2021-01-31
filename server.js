@@ -66,7 +66,7 @@ app.get('/exercises', async (req, res) => {
   (async () => {
     let userId = req.query.id
       try {
-          let query = db.collection('exercises').where("fisioId", "==", userId);
+          let query = db.collection('exercises').where("fisioId", "==", userId).orderBy("startDate", "desc");
           let response = [];
           await query.get().then(querySnapshot => {
           let docs = querySnapshot.docs;

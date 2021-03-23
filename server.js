@@ -16,7 +16,7 @@ const { json } = require("express");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL: "https://cronogramas-teste-871db.firebaseio.com"
+  databaseURL: "https://cronogramas-68bfa.firebaseio.com"
 });
 
 let db = admin.firestore();

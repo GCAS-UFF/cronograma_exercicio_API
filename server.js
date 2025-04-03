@@ -2,6 +2,13 @@ var admin = require("firebase-admin");
 var express = require('express');
 var bodyParser = require('body-parser');
 
+const envMap = {
+  'DEV': '.env.local',
+  'PRODUCTION': '.env.production',
+}
+
+require('dotenv').config({ path: `./${envMap[process.env.NODE_ENV] || envMap['DEV']}` });
+
 var app = express();
 var cors = require('cors');
 app.use(cors());
@@ -11,12 +18,12 @@ const all = require('./user');
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }))
-var serviceAccount = require("./credentials.json");
+var serviceAccount = require(`./${process.env.REACT_APP_FIREBASE_CREDENTIALS_FILE}`);
 const { json } = require("express");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL: "https://cronogramas-teste-871db.firebaseio.com"
+  databaseURL: process.env.REACT_APPFIREBASE_DATABASE_URL
 });
 
 let db = admin.firestore();
@@ -25,6 +32,10 @@ app.get('/users', all)
 
 app.post('/users', async (req, res) => {
   let name = req.body.username;
+  const messages = {
+    'auth/email-already-exists': 'O endereço de e-mail já está sendo usado.',
+  };
+
   admin.auth().createUser({
     email: req.body.email,
     password: req.body.password,
@@ -40,13 +51,13 @@ app.post('/users', async (req, res) => {
           return res.json({ message: userRecord })
         })
         .catch((error) => {
-          return res.json({ message: error });
+          return res.status(500).json({ message: error.message });
         });
 
     })
     .catch(function (error) {
       // console.log('Error creating new user:', error);
-      return res.json({ message: error });
+      return res.status(422).json({ message: messages[error.code] || error.message });
 
     });
 })
@@ -199,4 +210,7 @@ app.get('/fisio', async (req, res) => {
 
 // }
 
-app.listen(process.env.PORT || 8080);
+const port = process.env.PORT || 8080;
+app.listen(port, () => {
+  console.log(`Listening on port ${port}.`);
+});

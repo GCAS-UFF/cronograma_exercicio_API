@@ -18,12 +18,11 @@ const all = require('./user');
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }))
-var serviceAccount = require(`./${process.env.REACT_APP_FIREBASE_CREDENTIALS_FILE}`);
 const { json } = require("express");
 
+var serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_CONFIG);
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL: process.env.REACT_APPFIREBASE_DATABASE_URL
 });
 
 let db = admin.firestore();

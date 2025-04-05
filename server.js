@@ -4,7 +4,7 @@ var bodyParser = require('body-parser');
 
 const envMap = {
   'DEV': '.env.local',
-  'PRODUCTION': '.env.production',
+  'PRODUCTION': '.env',
 }
 
 require('dotenv').config({ path: `./${envMap[process.env.NODE_ENV] || envMap['DEV']}` });
